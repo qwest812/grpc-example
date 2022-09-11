@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"google.golang.org/grpc"
 	"grpc/external/orders"
+	"io"
 	"net"
 	"time"
 )
@@ -38,9 +39,43 @@ type server struct {
 
 func (s server) OrderStatusStream(stream orders.OrdersServer_OrderStatusStreamServer) error {
 	fmt.Println("OrderStatusStream established")
+	//order := orders.OrderStatus{
+	//	Id: "123",
+	//}
+	//if err := stream.Send(&order); err != nil {
+	//	fmt.Printf("Error send Order, Err: %v", err)
+	//}
 
+	done := make(chan struct{})
+
+	go func() {
+		for {
+			resp, err := stream.Recv()
+			if err == io.EOF {
+				done <- struct{}{}
+				return
+			}
+			if err != nil {
+				fmt.Printf("Error Order status stream , Err: %v", err)
+				continue
+			}
+			if resp != nil {
+				fmt.Printf(resp.String())
+			}
+			status := &orders.OrderStatus{
+				Id: "123",
+			}
+			err = stream.Send(status)
+			if err != nil {
+				fmt.Printf("Error Order status stream , Err: %v", err)
+			}
+		}
+	}()
+	//we are waiting EOF
+	<-done
 	return nil
 }
+
 func (s server) OrdersStream(req *orders.Empty, stream orders.OrdersServer_OrdersStreamServer) error {
 	fmt.Println("OrdersStream established")
 	order := orders.NewOrder{
