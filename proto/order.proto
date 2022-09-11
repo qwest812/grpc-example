@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package main;
+option go_package = "/orders";
+
+service OrdersServer{
+  rpc OrdersStream (Empty) returns (stream NewOrder){}
+  rpc OrderStatusStream (stream OrderRequest) returns (stream OrderStatus){}
+}
+
+message Empty{
+
+}
+message NewOrder{
+  string id = 1;
+  string type = 2;
+
+}
+message OrderRequest{
+  string id = 1;
+}
+message OrderStatus{
+  string id = 1;
+}
